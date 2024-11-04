@@ -11,7 +11,7 @@ class RouteTest extends TestCase
     /**
      * A basic feature test example.
      */
-    public function test_example(): void
+    public function test_route(): void
     {
         $response = $this->get('/');
 
