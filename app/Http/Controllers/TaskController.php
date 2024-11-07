@@ -6,6 +6,8 @@ use App\Models\Task;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
+
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TaskController extends Controller
@@ -15,10 +17,14 @@ class TaskController extends Controller
      */
     public function index()
     {
-        $this->authorize("getList", Task::class);
-        $tasks = Task::all();
+        try {
+            $this->authorize("getList", Task::class);
+            $tasks = Task::all();
 
-        return response()->json(['data' => $tasks], 200);
+            return response()->json(['data' => $tasks], 200);
+        } catch (AuthorizationException $e) {
+            return response()->json(['error' => 'Không đủ quyền để thực hiện'], 403);
+        }
     }
 
     /**
@@ -26,15 +32,21 @@ class TaskController extends Controller
      */
     public function store(CreateTaskRequest $request)
     {
-        $this->authorize('create', Task::class);
-        $data = $request->all();
-        $data['user_id'] = $request->user()->id;
-        $task = Task::create($data);
+        try {
+            $this->authorize('create', Task::class);
+            $data = $request->all();
+            $data['user_id'] = $request->user()->id;
+            $task = Task::create($data);
 
-        return response()->json([
-            'message' => 'Tạo công việc thành công!',
-            'task' => $task
-        ], 201);
+            return response()->json([
+                'message' => 'Tạo công việc thành công!',
+                'task' => $task
+            ], 201);
+        } catch (AuthorizationException $e) {
+            return response()->json([
+                'message' => "Bạn không có quyền cho hành động này"
+            ], 403);
+        }
     }
 
     /**
@@ -66,10 +78,10 @@ class TaskController extends Controller
             return response()->json([
                 'error' => 'Không tìm thấy bản ghi phù hợp'
             ], 404);
-        } catch (\Exception $e) {
+        } catch (AuthorizationException $e) {
             return response()->json([
-                'error' => 'Đã xảy ra lỗi trong quá trình cập nhật công việc'
-            ], 500);
+                'message' => "Bạn không có quyền cho hành động này"
+            ], 403);
         }
     }
 
@@ -87,10 +99,10 @@ class TaskController extends Controller
             return response()->json([
                 'error' => 'Không tìm thấy bản ghi nào'
             ], 404);
-        } catch (\Exception $e) {
+        } catch (AuthorizationException $e) {
             return response()->json([
-                'error' => $e->getMessage()
-            ]);
+                'message' => "Bạn không có quyền cho hành động này"
+            ], 403);
         }
     }
 }

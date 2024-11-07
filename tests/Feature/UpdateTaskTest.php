@@ -13,17 +13,19 @@ class UpdateTaskTest extends TestCase
     use RefreshDatabase;
 
     protected $adminUser;
+    protected $regularUser;
     protected function setUp(): void
     {
         parent::setUp();
 
         // Tạo người dùng với vai trò admin và user
         $this->adminUser = User::factory()->create(['role' => 'admin']);
+        $this->regularUser = User::factory()->create(['role' => 'user']);
     }
     /**
      * A basic feature test example.
      */
-    public function test_user_can_update_task_if_data_valid(): void
+    public function test_user_can_update_task_if_data_valid_and_user_logged(): void
     {
         $task = Task::factory()->create();
 
@@ -33,7 +35,7 @@ class UpdateTaskTest extends TestCase
             'completed' => "Chưa hoàn thành"
         ];
 
-        $response = $this->actingAs($this->adminUser)->put(route('tasks.update', $task->id), $dataUpdate);
+        $response = $this->actingAs($this->adminUser)->putJson(route('tasks.update', $task->id), $dataUpdate);
 
         $response->assertStatus(200);
 
@@ -95,5 +97,40 @@ class UpdateTaskTest extends TestCase
         ]);
 
         $this->assertDatabaseMissing('tasks', ['title' => $dataUpdate['title']]);
+    }
+
+    public function test_user_can_not_update_if_user_have_not_sufficient_permissions()
+    {
+        $task = Task::factory()->create();
+
+        $dataUpdate = [
+            'title' => "Update 1",
+            'description' => "Update 1 description",
+            'completed' => "Chưa hoàn thành"
+        ];
+
+        $response = $this->actingAs($this->regularUser)->putJson(route('tasks.update', $task->id), $dataUpdate);
+
+        $response->assertStatus(403);
+
+        $response->assertJson(['message' => 'Bạn không có quyền cho hành động này']);
+        $this->assertDatabaseMissing('tasks', ['title' => $dataUpdate['title']]);
+    }
+
+    public function test_user_can_not_update_if_user_is_not_logged_in()
+    {
+        $task = Task::factory()->create();
+
+        $dataUpdate = [
+            'title' => "Update 1",
+            'description' => "Update 1 description",
+            'completed' => "Chưa hoàn thành"
+        ];
+
+        $response = $this->putJson(route('tasks.update', $task->id), $dataUpdate);
+
+        $response->assertStatus(401);
+
+        $response->assertJson(['message' => 'Bạn cần đăng nhập để thực hiện']);
     }
 }
