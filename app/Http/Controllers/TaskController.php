@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateTaskRequest;
-use App\Http\Requests\UpdateTaskRequest;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use App\Http\Requests\CreateTaskRequest;
+use App\Http\Requests\UpdateTaskRequest;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class TaskController extends Controller
 {
@@ -47,15 +48,24 @@ class TaskController extends Controller
      */
     public function update(UpdateTaskRequest $request, string $id)
     {
-        // dd($request->all());
-        $task = Task::find($id);
+        try {
+            $task = Task::findOrFail($id);
 
-        $task->update($request->all());
+            $task->update($request->all());
 
-        return response()->json([
-            'message' => 'Cập nhật công việc thành công!',
-            'task' => $task
-        ], 200);
+            return response()->json([
+                'message' => 'Cập nhật công việc thành công!',
+                'task' => $task
+            ], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Không tìm thấy bản ghi phù hợp'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Đã xảy ra lỗi trong quá trình cập nhật công việc'
+            ], 500);
+        }
     }
 
     /**
@@ -63,8 +73,18 @@ class TaskController extends Controller
      */
     public function destroy(string $id)
     {
-        $task = Task::find($id);
-        $task->delete();
-        return response()->json([], 204);
+        try {
+            $task = Task::findOrFail($id);
+            $task->delete();
+            return response()->json([], 204);
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Không tìm thấy bản ghi nào'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }
