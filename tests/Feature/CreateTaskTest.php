@@ -2,17 +2,31 @@
 
 namespace Tests\Feature;
 
-use App\Models\Task;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use App\Models\Task;
+use App\Models\User;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class CreateTaskTest extends TestCase
 {
+    use RefreshDatabase;
+    protected $adminUser;
+    protected $editorUser;
+    protected $regularUser;
+    protected $task;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Tạo người dùng với vai trò admin và user
+        $this->adminUser = User::factory()->create(['role' => 'admin']);
+        $this->editorUser = User::factory()->create(['role' => 'editor']);
+        $this->regularUser = User::factory()->create(['role' => 'user']);
+    }
     /**
      * A basic feature test example.
      */
-    use RefreshDatabase;
     public function test_user_can_create_task_if_data_valid(): void
     {
         $data = [
@@ -21,7 +35,7 @@ class CreateTaskTest extends TestCase
             'completed' => 'Chưa hoàn thành'
         ];
         $count = Task::count();
-        $response = $this->postJson(route('tasks.store'),  $data);
+        $response = $this->actingAs($this->adminUser)->postJson(route('tasks.store'),  $data);
 
         $response->assertStatus(201);
 
@@ -47,7 +61,7 @@ class CreateTaskTest extends TestCase
             'completed' => ''
         ];
 
-        $response = $this->postJson(route('tasks.store'),  $data);
+        $response = $this->actingAs($this->adminUser)->postJson(route('tasks.store'),  $data);
 
         $response->assertStatus(422);
 

@@ -15,6 +15,7 @@ class TaskController extends Controller
      */
     public function index()
     {
+        $this->authorize("getList", Task::class);
         $tasks = Task::all();
 
         return response()->json(['data' => $tasks], 200);
@@ -25,7 +26,10 @@ class TaskController extends Controller
      */
     public function store(CreateTaskRequest $request)
     {
-        $task = Task::create($request->all());
+        $this->authorize('create', Task::class);
+        $data = $request->all();
+        $data['user_id'] = $request->user()->id;
+        $task = Task::create($data);
 
         return response()->json([
             'message' => 'Tạo công việc thành công!',
@@ -50,6 +54,7 @@ class TaskController extends Controller
     {
         try {
             $task = Task::findOrFail($id);
+            $this->authorize($task);
 
             $task->update($request->all());
 
@@ -75,8 +80,9 @@ class TaskController extends Controller
     {
         try {
             $task = Task::findOrFail($id);
+            $this->authorize('delete', Task::class);
             $task->delete();
-            return response()->json([], 204);
+            return response()->json(['ak' => "ak"], 204);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Không tìm thấy bản ghi nào'

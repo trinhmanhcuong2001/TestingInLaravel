@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthControllerApi;
 use App\Http\Controllers\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,4 +20,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::apiResource('tasks', TaskController::class);
+Route::apiResource('tasks', TaskController::class)->middleware('auth:sanctum');
+
+Route::post('/login', [AuthControllerApi::class, 'login'])->name('login');

@@ -2,14 +2,24 @@
 
 namespace Tests\Feature;
 
-use App\Models\Task;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use App\Models\Task;
+use App\Models\User;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UpdateTaskTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected $adminUser;
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Tạo người dùng với vai trò admin và user
+        $this->adminUser = User::factory()->create(['role' => 'admin']);
+    }
     /**
      * A basic feature test example.
      */
@@ -23,7 +33,7 @@ class UpdateTaskTest extends TestCase
             'completed' => "Chưa hoàn thành"
         ];
 
-        $response = $this->put(route('tasks.update', $task->id), $dataUpdate);
+        $response = $this->actingAs($this->adminUser)->put(route('tasks.update', $task->id), $dataUpdate);
 
         $response->assertStatus(200);
 
@@ -51,7 +61,7 @@ class UpdateTaskTest extends TestCase
             'description' => "Update 1 description",
             'completed' => "Chưa hoàn thành"
         ];
-        $response = $this->putJson(route('tasks.update', $taskId), $dataUpdate);
+        $response = $this->actingAs($this->adminUser)->putJson(route('tasks.update', $taskId), $dataUpdate);
 
         $response->assertStatus(404);
 
@@ -69,9 +79,9 @@ class UpdateTaskTest extends TestCase
             'description' => '',
         ];
 
-        $task = Task::factory()->create();
+        $task = Task::factory(['user_id' => $this->adminUser->id])->create();
 
-        $response = $this->putJson(route('tasks.update', $task->id), $dataUpdate);
+        $response = $this->actingAs($this->adminUser)->putJson(route('tasks.update', $task->id), $dataUpdate);
 
         $response->assertStatus(422);
 

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +20,8 @@ class TaskFactory extends Factory
         return [
             "title" => $this->faker->title(),
             "description" => $this->faker->text(),
-            "completed" => $this->faker->randomElement(['Chưa hoàn thành', 'Hoàn thành'])
+            "completed" => $this->faker->randomElement(['Chưa hoàn thành', 'Hoàn thành']),
+            'user_id' => User::inRandomOrder()->first()->id,
         ];
     }
 }
